@@ -1,24 +1,45 @@
-# README
+#  Threat Intelligence PDF Reporter
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+A simple Rails application to generate PDF reports from threat intelligence data.
 
-Things you may want to cover:
+## Quick Start
 
-* Ruby version
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/werghi-ashwek/technical-test-ruby-report.git
+   cd technical-test-report-generator
+## Install dependencies:
 
-* System dependencies
+bash
+bundle install
+## Start the server:
 
-* Configuration
+bash
+rails server
+Access the app in your browser:
 
-* Database creation
+http://localhost:3000/reports/generate
+## Routes
+The application has two main routes:
 
-* Database initialization
+GET /reports/generate - HTML preview of the report
 
-* How to run the test suite
+GET /reports/download_pdf - Generates and downloads the PDF report
 
-* Services (job queues, cache servers, search engines, etc.)
+## Dependencies
+Ruby 3.x
 
-* Deployment instructions
+Rails 7.x
 
-* ...
+## Prawn gem for PDF generation:
+
+ruby
+gem 'prawn'
+gem 'prawn-table'
+
+## Customization
+Edit these files to modify the report:
+
+app/controllers/reports_controller.rb - Report content and PDF formatting
+
+app/views/reports/report_template.html.erb - HTML template
