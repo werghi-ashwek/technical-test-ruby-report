@@ -1,8 +1,78 @@
+require "pdfkit"
+
 class ReportsController < ApplicationController
-  before_action :set_report_data, only: [:generate]
+  before_action :set_report_data, only: [:generate, :download_pdf]
 
   def generate
     render template: "reports/report_template", layout: false
+  end
+
+  def download_pdf
+    begin
+      # 1. Debug request
+      logger.info "PDF generation started - #{Time.now}"
+      
+      # 2. Render HTML
+      html = render_to_string(
+        template: "reports/report_template",
+        layout: false,
+        locals: { report_data: @report_data }
+      )
+      
+      # 3. Save debug files
+      debug_dir = Rails.root.join('tmp/pdf_debug')
+      FileUtils.mkdir_p(debug_dir)
+      
+      html_path = debug_dir.join('debug.html')
+      File.write(html_path, html)
+      logger.info "Debug HTML saved to: #{html_path}"
+      
+      # 4. Configure PDFKit
+      kit = PDFKit.new(html,
+        page_size: 'Letter',
+        print_media_type: true,
+        encoding: 'UTF-8',
+        disable_javascript: false,
+        javascript_delay: 2000,
+        debug_javascript: true,
+        quiet: false
+      )
+      
+      # 5. Windows-specific configuration
+      exe_path = 'C:/Program Files/wkhtmltopdf/bin/wkhtmltopdf.exe'
+      unless File.exist?(exe_path)
+        raise "wkhtmltopdf not found at #{exe_path}"
+      end
+      kit.configuration.wkhtmltopdf = exe_path
+      
+      # 6. Capture errors
+      error_path = debug_dir.join('errors.log')
+      kit.stderr = File.open(error_path, 'w')
+      
+      # 7. Generate PDF
+      logger.info "Starting PDF generation..."
+      pdf = kit.to_pdf
+      logger.info "PDF generated successfully (#{pdf.size} bytes)"
+      
+      # 8. Verify PDF
+      if pdf.size < 1024
+        error_content = File.read(error_path) rescue "No error log found"
+        raise "PDF generation failed. Errors:\n#{error_content}"
+      end
+      
+      # 9. Send PDF with proper headers
+      response.headers['Content-Length'] = pdf.size.to_s
+      send_data pdf,
+                filename: "report_#{Time.now.to_i}.pdf",
+                type: 'application/pdf',
+                disposition: 'inline'
+      
+    rescue => e
+      logger.error "PDF ERROR: #{e.message}\n#{e.backtrace.join("\n")}"
+      
+      # Return error response that's visible to user
+      render plain: "PDF Generation Failed: #{e.message}", status: 500
+    end
   end
 
   private
@@ -16,10 +86,9 @@ class ReportsController < ApplicationController
       report_metadata: report_metadata,
       methodology: methodology,
       findings: findings
-    }.with_indifferent_access # Allows both symbol and string key access
+    }.with_indifferent_access
   end
 
-  # Add empty hash fallbacks to all methods
   def executive_summary
     {
       overview: "This report analyzes potential cyber threats targeting key domains within the organization.",
@@ -85,19 +154,19 @@ class ReportsController < ApplicationController
 
   def whois_info_shown
     [
-      { 
-        domain_name: "example.com", 
-        registrar: "Some Registrar", 
+      {
+        domain_name: "example.com",
+        registrar: "Some Registrar",
         created_at: "2022-01-01",
-        updated_at: "2022-06-15",  # Add this
-        expires_at: "2023-01-01"    # Add this
+        updated_at: "2022-06-15",
+        expires_at: "2023-01-01"
       },
-      { 
-        domain_name: "example.net", 
-        registrar: "Another Registrar", 
+      {
+        domain_name: "example.net",
+        registrar: "Another Registrar",
         created_at: "2022-02-01",
-        updated_at: "2022-07-20",   # Add this
-        expires_at: "2023-02-01"    # Add this
+        updated_at: "2022-07-20",
+        expires_at: "2023-02-01"
       }
     ].map(&:with_indifferent_access)
   end
@@ -107,7 +176,6 @@ class ReportsController < ApplicationController
       logstealer_leaks: logstealer_leaks,
       public_leaks: public_leaks,
       combo_leaks: combo_leaks,
-      # Add summary totals for easier template access
       summary: {
         total_leaks: logstealer_leaks[:total] + public_leaks[:total] + combo_leaks[:total],
         last_updated: Time.current
@@ -124,7 +192,6 @@ class ReportsController < ApplicationController
         ["user3@example.com", "password789", "http://example.net", "2022"]
       ],
       note: "These credentials were exposed by malware targeting user data.",
-      # Add metadata for each leak
       metadata: {
         source: "Malware analysis",
         confidence: "High"
