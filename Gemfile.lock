@@ -76,11 +76,12 @@ GEM
       public_suffix (>= 2.0.2, < 7.0)
     ast (2.4.3)
     base64 (0.2.0)
+    bcrypt_pbkdf (1.1.1)
     bcrypt_pbkdf (1.1.1-x64-mingw-ucrt)
     benchmark (0.4.0)
     bigdecimal (3.1.9)
     bindex (0.8.1)
-    bootsnap (1.18.4)
+    bootsnap (1.18.6)
       msgpack (~> 1.2)
     brakeman (7.0.2)
       racc
@@ -170,6 +171,8 @@ GEM
     net-ssh (7.3.0)
     nio4r (2.7.4)
     nokogiri (1.18.8-x64-mingw-ucrt)
+      racc (~> 1.4)
+    nokogiri (1.18.8-x86_64-linux-gnu)
       racc (~> 1.4)
     ostruct (0.6.1)
     parallel (1.27.0)
@@ -300,6 +303,7 @@ GEM
       railties (>= 7.1)
       thor (~> 1.3.1)
     sqlite3 (2.6.0-x64-mingw-ucrt)
+    sqlite3 (2.6.0-x86_64-linux-gnu)
     sshkit (1.24.0)
       base64
       logger
@@ -343,6 +347,7 @@ GEM
 
 PLATFORMS
   x64-mingw-ucrt
+  x86_64-linux
 
 DEPENDENCIES
   bootsnap
